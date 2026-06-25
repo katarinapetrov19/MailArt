@@ -1053,7 +1053,7 @@ export default function Home() {
           <label className="subscribe-field-label required" htmlFor="subscribeCountry">Country</label>
           <input className="subscribe-field-input" type="text" id="subscribeCountry" placeholder="Country" autoComplete="country-name" required />
         </div>
-        <button id="stripe-subscribe-btn" className="portrait-cta-btn" type="button" style={{ width: '100%', marginTop: '1rem', textAlign: 'center' }}>Subscribe with Stripe</button>
+        <button id="stripe-subscribe-btn" className="portrait-cta-btn" type="button" style={{ width: '100%', marginTop: '1rem', textAlign: 'center', background: '#2d8a4e' }}>Subscribe with Stripe</button>
         <a href="/manage" style={{ display: 'block', textAlign: 'center', marginTop: '0.75rem', fontFamily: 'DM Sans, sans-serif', fontSize: '0.85rem', color: '#888', textDecoration: 'none' }}>Manage or cancel subscription</a>
         <p id="paypal-message" role="alert"></p>
       </div>
@@ -1108,7 +1108,7 @@ export default function Home() {
           <input type="checkbox" id="portraitConsent" required />
           <span>I agree to my photo being used to draw my portrait and deleted afterwards. <a href="/privacy" target="_blank" className="portrait-consent-link">Privacy policy</a></span>
         </label>
-        <button id="stripe-portrait-btn" className="portrait-cta-btn" type="button" style={{ width: '100%', marginTop: '1rem', textAlign: 'center' }}>Pay 35€ with Stripe</button>
+        <button id="stripe-portrait-btn" className="portrait-cta-btn" type="button" style={{ width: '100%', marginTop: '1rem', textAlign: 'center', background: '#2d8a4e' }}>Pay 35€ with Stripe</button>
         <p id="portrait-message" role="alert"></p>
       </div>
 
