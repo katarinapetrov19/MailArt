@@ -34,8 +34,7 @@ export default function ManagePage() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className="portrait-field-input"
-            style={{ fontSize: '1rem' }}
+            style={{ fontSize: '1rem', background: '#fff', color: '#1a1a1a', border: '1.5px solid #ddd', borderRadius: '999px', padding: '0.85rem 1.25rem', width: '100%', boxSizing: 'border-box', fontFamily: 'DM Sans, sans-serif', outline: 'none' }}
           />
           {error && <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', color: '#c00', margin: 0 }}>{error}</p>}
           <button
