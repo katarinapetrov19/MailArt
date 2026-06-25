@@ -826,7 +826,7 @@ export default function Home() {
                 <span className="portrait-pill">Ships in 2–3 weeks</span>
                 <span className="portrait-pill">Original artwork</span>
               </div>
-              <button className="portrait-cta-btn" id="portraitOrderBtn" type="button">Order your portrait</button>
+              <button className="portrait-cta-btn" id="portraitOrderBtn" type="button">Order your portrait — 35€</button>
             </div>
             <div className="portrait-visual">
               <div className="portrait-frame">
