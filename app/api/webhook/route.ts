@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const resend = new Resend(process.env.RESEND_API_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? 'placeholder');
+const getResend = () => new Resend(process.env.RESEND_API_KEY!);
 
 const ARTIST_EMAIL = 'pieppiepseppl@gmail.com';
 const FROM_EMAIL = 'onboarding@resend.dev';
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const meta = session.metadata || {};
 
     // Email to customer
-    await resend.emails.send({
+    await getResend().emails.send({
       from: FROM_EMAIL,
       to: customerEmail,
       subject: isSubscription ? 'You\'re in the Mail Club!' : 'Portrait order confirmed!',
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Notification to artist
-    await resend.emails.send({
+    await getResend().emails.send({
       from: FROM_EMAIL,
       to: ARTIST_EMAIL,
       subject: isSubscription
