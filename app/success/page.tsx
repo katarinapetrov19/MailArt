@@ -58,21 +58,32 @@ export default async function SuccessPage({ searchParams }: { searchParams: Sear
             : "I'll start working on your portrait and ship the original to you soon."}
         </p>
 
-        <Link href="/" style={{
-          display: 'inline-block',
-          padding: '1rem 2.5rem',
-          background: '#1a1a1a',
-          color: '#fff',
-          borderRadius: '999px',
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: '1rem',
-          fontWeight: 600,
-          letterSpacing: '0.3px',
-          textDecoration: 'none',
-          transition: 'background 0.2s ease',
-        }}>
-          Back to home
-        </Link>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+          <Link href="/" style={{
+            display: 'inline-block',
+            padding: '1rem 2.5rem',
+            background: '#1a1a1a',
+            color: '#fff',
+            borderRadius: '999px',
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: '1rem',
+            fontWeight: 600,
+            letterSpacing: '0.3px',
+            textDecoration: 'none',
+          }}>
+            Back to home
+          </Link>
+          {isSubscription && (
+            <Link href="/manage" style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: '0.9rem',
+              color: '#888',
+              textDecoration: 'none',
+            }}>
+              Manage or cancel subscription
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
