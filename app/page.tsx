@@ -1012,17 +1012,6 @@ export default function Home() {
       <div id="subscribe-sheet" role="dialog" aria-modal="true" aria-label="Subscribe to Mail Club">
         <button id="subscribe-close" aria-label="Close">&times;</button>
         <h2 className="subscribe-main-title">Subscribe to my Mail Club</h2>
-        <p className="subscribe-section-label">Monthly or one-time?</p>
-        <div className="subscribe-toggle">
-          <label className="subscribe-toggle-option">
-            <input type="radio" name="purchase-type" value="subscribe" defaultChecked />
-            <span className="subscribe-toggle-label">Subscribe</span>
-          </label>
-          <label className="subscribe-toggle-option">
-            <input type="radio" name="purchase-type" value="one-time" />
-            <span className="subscribe-toggle-label">One-time</span>
-          </label>
-        </div>
         <p className="subscribe-section-label">Choose your plan</p>
         <div className="artwork-count-group" role="group" aria-label="Number of artworks">
           <button className="artwork-count-btn is-selected" data-count="1">
