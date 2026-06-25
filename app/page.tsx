@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import Script from 'next/script';
-import Image from 'next/image';
 
 export default function Home() {
   // ── Refs ────────────────────────────────────────────────────────────────────
@@ -440,28 +438,24 @@ export default function Home() {
 
   // ── Subscribe side sheet ────────────────────────────────────────────────────
   useEffect(() => {
-    const PLAN_IDS: Record<number, string> = {
-      1: 'P-5N106877JT822010UNGMHFHA',
-      2: 'P-6LU70100DD615590BNGMHKBQ',
-      3: 'P-3CV898681C0284927NGMHK7I',
+    const PRICE_IDS: Record<number, string> = {
+      1: 'price_1TmDPEIHq8kOuh15l7QEkBFv',
+      2: 'price_1TmDPPIHq8kOuh154c29GK9U',
+      3: 'price_1TmDPYIHq8kOuh1555z3mwxl',
     };
-    const PRICES: Record<number, { display: string; eur: string }> = {
-      1: { display: '8€', eur: '8.00' },
-      2: { display: '11€', eur: '11.00' },
-      3: { display: '15€', eur: '15.00' },
+    const PRICES: Record<number, { display: string }> = {
+      1: { display: '8€' },
+      2: { display: '11€' },
+      3: { display: '15€' },
     };
 
     let selectedCount = 1;
-    let purchaseType = 'subscribe';
-    let paypalInstance: any = null;
 
     const overlay = document.getElementById('subscribe-overlay');
     const sheet = document.getElementById('subscribe-sheet');
     const closeBtn = document.getElementById('subscribe-close');
     const countBtns = document.querySelectorAll<HTMLButtonElement>('.artwork-count-btn');
-    const purchaseTypeRadios = document.querySelectorAll<HTMLInputElement>('input[name="purchase-type"]');
-    const paypalContainer = document.getElementById('paypal-button-container');
-    const paypalMessage = document.getElementById('paypal-message');
+    const stripeMessage = document.getElementById('paypal-message');
 
     if (!overlay || !sheet) return;
 
@@ -469,7 +463,7 @@ export default function Home() {
       countBtns.forEach((b) => {
         const count = parseInt(b.dataset.count || '1');
         const priceSpan = b.querySelector('.artwork-count-price');
-        if (priceSpan) priceSpan.textContent = purchaseType === 'subscribe' ? `${PRICES[count].display}/mo` : PRICES[count].display;
+        if (priceSpan) priceSpan.textContent = `${PRICES[count].display}/mo`;
       });
     };
 
@@ -496,48 +490,55 @@ export default function Home() {
       return firstInvalid;
     };
 
-    const showSuccess = (msg: string) => {
-      sheet.querySelectorAll<HTMLElement>('.subscribe-main-title,.subscribe-section-label,.artwork-count-group,.subscribe-toggle,.subscribe-fields,#paypal-button-container').forEach((el) => { el.style.display = 'none'; });
-      if (paypalMessage) { paypalMessage.textContent = `✓ ${msg}`; paypalMessage.className = 'paypal-message--success'; }
-      setTimeout(closeSheet, 3500);
-    };
     const showError = (msg: string) => {
-      if (paypalMessage) { paypalMessage.textContent = `✗ ${msg}`; paypalMessage.className = 'paypal-message--error'; }
+      if (stripeMessage) { stripeMessage.textContent = `✗ ${msg}`; stripeMessage.className = 'paypal-message--error'; }
     };
 
-    const renderPaypalButton = () => {
-      if (paypalInstance) { paypalInstance.close(); paypalInstance = null; }
-      if (paypalContainer) paypalContainer.innerHTML = '';
-      if (paypalMessage) { paypalMessage.textContent = ''; paypalMessage.className = ''; }
-      const w = window as any;
-      if (typeof w.paypal === 'undefined') return;
+    const handleStripeSubscribe = async () => {
+      const firstInvalid = validateFields();
+      if (firstInvalid) {
+        showError('Please fill in all required fields.');
+        (firstInvalid as HTMLElement).focus();
+        return;
+      }
 
-      const price = PRICES[selectedCount];
-      const sharedHooks = {
-        onClick: (_: any, actions: any) => {
-          const firstInvalid = validateFields();
-          if (firstInvalid) { showError('Please fill in all required fields.'); (firstInvalid as HTMLElement).focus(); return actions.reject(); }
-          return actions.resolve();
-        },
-        onError: (err: any) => { showError('Something went wrong. Please try again.'); console.error(err); },
-      };
+      const name = (document.getElementById('subscribeName') as HTMLInputElement).value.trim();
+      const email = (document.getElementById('subscribeEmail') as HTMLInputElement).value.trim();
+      const address = (document.getElementById('subscribeAddress') as HTMLInputElement).value.trim();
+      const city = (document.getElementById('subscribeCity') as HTMLInputElement).value.trim();
+      const postal = (document.getElementById('subscribePostal') as HTMLInputElement).value.trim();
+      const country = (document.getElementById('subscribeCountry') as HTMLInputElement).value.trim();
 
-      const config = purchaseType === 'subscribe'
-        ? { ...sharedHooks, createSubscription: (_: any, actions: any) => actions.subscription.create({ plan_id: PLAN_IDS[selectedCount] }), onApprove: () => showSuccess("You're in! Your first artwork is on its way.") }
-        : { ...sharedHooks, createOrder: (_: any, actions: any) => actions.order.create({ intent: 'CAPTURE', purchase_units: [{ amount: { value: price.eur, currency_code: 'EUR' }, description: `${selectedCount} artwork(s) — one-time purchase` }] }), onApprove: (_: any, actions: any) => actions.order.capture().then(() => showSuccess('Payment confirmed! Your artwork is on its way.')) };
+      const stripeBtn = document.getElementById('stripe-subscribe-btn') as HTMLButtonElement | null;
+      if (stripeBtn) { stripeBtn.disabled = true; stripeBtn.textContent = 'Redirecting…'; }
+      if (stripeMessage) { stripeMessage.textContent = ''; stripeMessage.className = ''; }
 
-      paypalInstance = w.paypal.Buttons(config);
-      if (paypalInstance.isEligible()) paypalInstance.render('#paypal-button-container');
+      try {
+        const res = await fetch('/api/checkout/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ priceId: PRICE_IDS[selectedCount], name, email, address, city, postal, country }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          showError('Something went wrong. Please try again.');
+          if (stripeBtn) { stripeBtn.disabled = false; stripeBtn.textContent = 'Subscribe with Stripe'; }
+        }
+      } catch {
+        showError('Something went wrong. Please try again.');
+        if (stripeBtn) { stripeBtn.disabled = false; stripeBtn.textContent = 'Subscribe with Stripe'; }
+      }
     };
 
     const openSheet = () => {
-      sheet.querySelectorAll<HTMLElement>('.subscribe-main-title,.subscribe-section-label,.artwork-count-group,.subscribe-toggle,.subscribe-fields,#paypal-button-container').forEach((el) => { el.style.display = ''; });
       sheet.classList.add('is-open');
       overlay.classList.add('is-open');
       overlay.removeAttribute('aria-hidden');
       document.body.style.overflow = 'hidden';
       updatePriceDisplay();
-      renderPaypalButton();
+      if (stripeMessage) { stripeMessage.textContent = ''; stripeMessage.className = ''; }
       setTimeout(() => { if (closeBtn) closeBtn.focus(); }, 50);
     };
 
@@ -546,9 +547,7 @@ export default function Home() {
       overlay.classList.remove('is-open');
       overlay.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
-      if (paypalInstance) { paypalInstance.close(); paypalInstance = null; }
-      if (paypalContainer) paypalContainer.innerHTML = '';
-      if (paypalMessage) { paypalMessage.textContent = ''; paypalMessage.className = ''; }
+      if (stripeMessage) { stripeMessage.textContent = ''; stripeMessage.className = ''; }
     };
 
     countBtns.forEach((b) => {
@@ -557,15 +556,6 @@ export default function Home() {
         countBtns.forEach((x) => x.classList.remove('is-selected'));
         this.classList.add('is-selected');
         updatePriceDisplay();
-        renderPaypalButton();
-      });
-    });
-
-    purchaseTypeRadios.forEach((r) => {
-      r.addEventListener('change', function (this: HTMLInputElement) {
-        purchaseType = this.value;
-        updatePriceDisplay();
-        renderPaypalButton();
       });
     });
 
@@ -581,6 +571,9 @@ export default function Home() {
     const mailHowSubBtn = document.getElementById('mailHowSubscribeBtn');
     if (mailHowSubBtn) mailHowSubBtn.addEventListener('click', openSheet);
 
+    const stripePayBtn = document.getElementById('stripe-subscribe-btn');
+    if (stripePayBtn) stripePayBtn.addEventListener('click', handleStripeSubscribe);
+
     return () => {
       document.removeEventListener('keydown', onKey);
     };
@@ -595,7 +588,6 @@ export default function Home() {
     const photoPreview = document.getElementById('portraitPhotoPreview') as HTMLImageElement | null;
     const uploadContent = document.getElementById('portraitUploadContent');
     const ppMessage = document.getElementById('portrait-message');
-    const ppContainer = document.getElementById('portrait-paypal-container');
 
     if (!overlay || !sheet) return;
 
@@ -618,44 +610,55 @@ export default function Home() {
       return firstInvalid;
     };
 
-    const renderPortraitPaypal = () => {
-      if (!ppContainer) return;
-      ppContainer.innerHTML = '';
-      if (ppMessage) { ppMessage.textContent = ''; ppMessage.className = ''; }
-      const w = window as any;
-      if (typeof w.paypal === 'undefined') return;
+    const showError = (msg: string) => {
+      if (ppMessage) { ppMessage.textContent = `✗ ${msg}`; ppMessage.className = 'paypal-message--error'; }
+    };
 
-      const btn = w.paypal.Buttons({
-        style: { layout: 'vertical', color: 'black', shape: 'pill', label: 'pay' },
-        onClick: (_: any, actions: any) => {
-          const firstInvalid = validateFields();
-          if (!photoInput?.files?.[0]) {
-            if (ppMessage) { ppMessage.textContent = '✗ Please upload your photo.'; ppMessage.className = 'paypal-message--error'; }
-            return actions.reject();
-          }
-          if (!(document.getElementById('portraitConsent') as HTMLInputElement)?.checked) {
-            if (ppMessage) { ppMessage.textContent = '✗ Please agree to the photo consent.'; ppMessage.className = 'paypal-message--error'; }
-            return actions.reject();
-          }
-          if (firstInvalid) {
-            if (ppMessage) { ppMessage.textContent = '✗ Please fill in all required fields.'; ppMessage.className = 'paypal-message--error'; }
-            (firstInvalid as HTMLElement).focus();
-            return actions.reject();
-          }
-          return actions.resolve();
-        },
-        createOrder: (_: any, actions: any) => actions.order.create({ intent: 'CAPTURE', purchase_units: [{ amount: { value: '35.00', currency_code: 'EUR' }, description: 'Custom portrait — PIEPPIEPSEPPL' }] }),
-        onApprove: (_: any, actions: any) => actions.order.capture().then(() => {
-          sheet.querySelectorAll<HTMLElement>('.portrait-sheet-title,.portrait-sheet-subtitle,.portrait-sheet-label,.portrait-upload-wrap,.portrait-fields,#portrait-paypal-container').forEach((el) => { el.style.display = 'none'; });
-          if (ppMessage) { ppMessage.textContent = "✓ Payment confirmed! I'll start your portrait soon."; ppMessage.className = 'paypal-message--success'; }
-          setTimeout(closeSheet, 4000);
-        }),
-        onError: (err: any) => {
-          if (ppMessage) { ppMessage.textContent = '✗ Something went wrong. Please try again.'; ppMessage.className = 'paypal-message--error'; }
-          console.error(err);
-        },
-      });
-      if (btn.isEligible()) btn.render('#portrait-paypal-container');
+    const handleStripePortrait = async () => {
+      const firstInvalid = validateFields();
+      if (!photoInput?.files?.[0]) {
+        showError('Please upload your photo.');
+        return;
+      }
+      if (!(document.getElementById('portraitConsent') as HTMLInputElement)?.checked) {
+        showError('Please agree to the photo consent.');
+        return;
+      }
+      if (firstInvalid) {
+        showError('Please fill in all required fields.');
+        (firstInvalid as HTMLElement).focus();
+        return;
+      }
+
+      const name = (document.getElementById('portraitName') as HTMLInputElement).value.trim();
+      const email = (document.getElementById('portraitEmail') as HTMLInputElement).value.trim();
+      const address = (document.getElementById('portraitAddress') as HTMLInputElement).value.trim();
+      const city = (document.getElementById('portraitCity') as HTMLInputElement).value.trim();
+      const postal = (document.getElementById('portraitPostal') as HTMLInputElement).value.trim();
+      const country = (document.getElementById('portraitCountry') as HTMLInputElement).value.trim();
+      const note = (document.getElementById('portraitNote') as HTMLTextAreaElement)?.value.trim() ?? '';
+
+      const stripeBtn = document.getElementById('stripe-portrait-btn') as HTMLButtonElement | null;
+      if (stripeBtn) { stripeBtn.disabled = true; stripeBtn.textContent = 'Redirecting…'; }
+      if (ppMessage) { ppMessage.textContent = ''; ppMessage.className = ''; }
+
+      try {
+        const res = await fetch('/api/checkout/portrait', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, address, city, postal, country, note }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          showError('Something went wrong. Please try again.');
+          if (stripeBtn) { stripeBtn.disabled = false; stripeBtn.textContent = 'Pay 35€ with Stripe'; }
+        }
+      } catch {
+        showError('Something went wrong. Please try again.');
+        if (stripeBtn) { stripeBtn.disabled = false; stripeBtn.textContent = 'Pay 35€ with Stripe'; }
+      }
     };
 
     const openSheet = () => {
@@ -663,8 +666,8 @@ export default function Home() {
       overlay.classList.add('is-open');
       overlay.removeAttribute('aria-hidden');
       document.body.style.overflow = 'hidden';
+      if (ppMessage) { ppMessage.textContent = ''; ppMessage.className = ''; }
       setTimeout(() => { if (closeBtn) closeBtn.focus(); }, 50);
-      renderPortraitPaypal();
     };
 
     const closeSheet = () => {
@@ -696,6 +699,9 @@ export default function Home() {
 
     const orderBtn = document.getElementById('portraitOrderBtn');
     if (orderBtn) orderBtn.addEventListener('click', openSheet);
+
+    const stripePortraitBtn = document.getElementById('stripe-portrait-btn');
+    if (stripePortraitBtn) stripePortraitBtn.addEventListener('click', handleStripePortrait);
 
     return () => { document.removeEventListener('keydown', onKey); };
   }, []);
@@ -785,13 +791,6 @@ export default function Home() {
   // ────────────────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* PayPal SDK */}
-      <Script
-        src="https://www.paypal.com/sdk/js?client-id=Acc19Sdw737-5D6L3pOH-vpAcArYwyZziaL3_CfpNw9Ru09eqnmnOnZqFE4-ecD44sJSyw2WuOG5faE0&vault=true&intent=subscription&currency=EUR"
-        data-sdk-integration-source="button-factory"
-        strategy="lazyOnload"
-      />
-
       {/* Navigation */}
       <nav className="navbar">
         <div className="container">
@@ -1065,7 +1064,7 @@ export default function Home() {
           <label className="subscribe-field-label required" htmlFor="subscribeCountry">Country</label>
           <input className="subscribe-field-input" type="text" id="subscribeCountry" placeholder="Country" autoComplete="country-name" required />
         </div>
-        <div id="paypal-button-container"></div>
+        <button id="stripe-subscribe-btn" className="portrait-cta-btn" type="button" style={{ width: '100%', marginTop: '1rem', textAlign: 'center' }}>Subscribe with Stripe</button>
         <p id="paypal-message" role="alert"></p>
       </div>
 
@@ -1119,7 +1118,7 @@ export default function Home() {
           <input type="checkbox" id="portraitConsent" required />
           <span>I agree to my photo being used to draw my portrait and deleted afterwards. <a href="/privacy" target="_blank" className="portrait-consent-link">Privacy policy</a></span>
         </label>
-        <div id="portrait-paypal-container"></div>
+        <button id="stripe-portrait-btn" className="portrait-cta-btn" type="button" style={{ width: '100%', marginTop: '1rem', textAlign: 'center' }}>Pay 35€ with Stripe</button>
         <p id="portrait-message" role="alert"></p>
       </div>
 
@@ -1140,7 +1139,7 @@ export default function Home() {
             <span className="how-step-num">2</span>
             <div>
               <strong>Pay 35€</strong>
-              <p>Secure checkout via PayPal. Your order is confirmed instantly.</p>
+              <p>Secure checkout via Stripe. Your order is confirmed instantly.</p>
             </div>
           </li>
           <li className="how-step">
