@@ -1054,6 +1054,7 @@ export default function Home() {
           <input className="subscribe-field-input" type="text" id="subscribeCountry" placeholder="Country" autoComplete="country-name" required />
         </div>
         <button id="stripe-subscribe-btn" className="portrait-cta-btn" type="button" style={{ width: '100%', marginTop: '1rem', textAlign: 'center' }}>Subscribe with Stripe</button>
+        <a href="/manage" style={{ display: 'block', textAlign: 'center', marginTop: '0.75rem', fontFamily: 'DM Sans, sans-serif', fontSize: '0.85rem', color: '#888', textDecoration: 'none' }}>Manage or cancel subscription</a>
         <p id="paypal-message" role="alert"></p>
       </div>
 
