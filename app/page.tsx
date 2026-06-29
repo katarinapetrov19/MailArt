@@ -353,32 +353,32 @@ export default function Home() {
 
   // ── Poster Art video carousel ───────────────────────────────────────────────
   useEffect(() => {
-    const videos = document.querySelectorAll<HTMLVideoElement>('.poster-art-video');
+    const video = document.getElementById('posterArtVideo') as HTMLVideoElement | null;
     const dots = document.querySelectorAll<HTMLElement>('.poster-art-dot');
     const prevBtn = document.querySelector<HTMLButtonElement>('.poster-art-btn--prev');
     const nextBtn = document.querySelector<HTMLButtonElement>('.poster-art-btn--next');
-    if (!videos.length) return;
+    if (!video) return;
 
+    const srcs = ['/img/poster-art-1.mp4', '/img/game1.mp4', '/img/projekt.mp4'];
     let current = 0;
 
     const goTo = (index: number) => {
-      videos[current].classList.remove('is-active');
-      videos[current].pause();
-      dots[current].classList.remove('is-active');
-      current = (index + videos.length) % videos.length;
-      videos[current].classList.add('is-active');
-      videos[current].load();
-      videos[current].play();
-      dots[current].classList.add('is-active');
+      current = (index + srcs.length) % srcs.length;
+      video.src = srcs[current];
+      video.load();
+      video.play();
+      dots.forEach((d, i) => d.classList.toggle('is-active', i === current));
     };
 
-    prevBtn?.addEventListener('click', () => goTo(current - 1));
-    nextBtn?.addEventListener('click', () => goTo(current + 1));
+    const onPrev = () => goTo(current - 1);
+    const onNext = () => goTo(current + 1);
+    prevBtn?.addEventListener('click', onPrev);
+    nextBtn?.addEventListener('click', onNext);
     dots.forEach((dot) => dot.addEventListener('click', () => goTo(parseInt(dot.dataset.index || '0'))));
 
     return () => {
-      prevBtn?.removeEventListener('click', () => goTo(current - 1));
-      nextBtn?.removeEventListener('click', () => goTo(current + 1));
+      prevBtn?.removeEventListener('click', onPrev);
+      nextBtn?.removeEventListener('click', onNext);
     };
   }, []);
 
@@ -1047,17 +1047,9 @@ export default function Home() {
               </a>
             </div>
           </div>
-          {/* Video carousel */}
-          <div className="projects-hero-media projects-hero-media--has-video poster-art-carousel" id="posterArtCarousel">
-            <video className="projects-hero-video poster-art-video is-active" autoPlay muted loop playsInline preload="auto" data-index="0">
-              <source src="/img/poster-art-1.mp4" type="video/mp4" />
-            </video>
-            <video className="projects-hero-video poster-art-video" muted loop playsInline preload="none" data-index="1">
-              <source src="/img/game1.mp4" type="video/mp4" />
-            </video>
-            <video className="projects-hero-video poster-art-video" muted loop playsInline preload="none" data-index="2">
-              <source src="/img/projekt.mp4" type="video/mp4" />
-            </video>
+          {/* Video carousel — single video element, src swapped on nav */}
+          <div className="projects-hero-media projects-hero-media--has-video poster-art-carousel">
+            <video id="posterArtVideo" className="projects-hero-video" autoPlay muted loop playsInline preload="auto" src="/img/poster-art-1.mp4" />
             <img src="/img/poster-art-bg.JPG" alt="Poster Art" className="projects-hero-fallback" loading="eager" />
             <div className="poster-art-controls">
               <button className="poster-art-btn poster-art-btn--prev" aria-label="Previous video">&#8592;</button>
