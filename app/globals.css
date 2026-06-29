@@ -4081,7 +4081,17 @@ footer.footer *,
         justify-content: flex-start;
     }
 
-    /* Fullscreen menu — reduce font on mobile */
+    /* Fullscreen menu — reduce font and fix padding on mobile */
+    #fullscreen-menu {
+        padding: 5vh 1.5rem !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+    }
+    .menu-links {
+        height: auto !important;
+        gap: 4vh;
+        justify-content: center !important;
+    }
     .menu-links a {
         font-size: 17vw !important;
     }
