@@ -4081,6 +4081,11 @@ footer.footer *,
         justify-content: flex-start;
     }
 
+    /* Fullscreen menu — reduce font on mobile */
+    .menu-links a {
+        font-size: 17vw !important;
+    }
+
     /* Hide About/hero section on mobile */
     #about,
     section#about,
